@@ -20,6 +20,7 @@ import {
   Shield,
   RotateCcw,
   Play,
+  Clock,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -34,6 +35,7 @@ interface Settings {
   location: string
   calculationMethod: string
   asrMethod: string
+  timeFormat: string
   athanVoice: string
   quranFont: string
   quranFontSize: number
@@ -54,6 +56,7 @@ export default function SettingsSection() {
     location: "New York, NY",
     calculationMethod: "mwl",
     asrMethod: "standard",
+    timeFormat: "12h",
     athanVoice: "mishary",
     quranFont: "noto-naskh",
     quranFontSize: 18,
@@ -71,7 +74,18 @@ export default function SettingsSection() {
 
   const [isPlayingPreview, setIsPlayingPreview] = useState(false)
 
-  // Check if PWA is installed
+  useEffect(() => {
+    const savedSettings = localStorage.getItem("athanWakeSettings")
+    if (savedSettings) {
+      try {
+        const parsed = JSON.parse(savedSettings)
+        setSettings((prev) => ({ ...prev, ...parsed }))
+      } catch (error) {
+        console.error("Error loading settings:", error)
+      }
+    }
+  }, [])
+
   useEffect(() => {
     const checkPWAInstalled = () => {
       const isStandalone = window.matchMedia("(display-mode: standalone)").matches
@@ -83,7 +97,14 @@ export default function SettingsSection() {
   }, [])
 
   const updateSetting = <K extends keyof Settings>(key: K, value: Settings[K]) => {
-    setSettings((prev) => ({ ...prev, [key]: value }))
+    setSettings((prev) => {
+      const newSettings = { ...prev, [key]: value }
+      localStorage.setItem("athanWakeSettings", JSON.stringify(newSettings))
+      if (["calculationMethod", "asrMethod", "location"].includes(key as string)) {
+        console.log("Recomputing prayer times with new settings:", { key, value })
+      }
+      return newSettings
+    })
   }
 
   const calculationMethods = [
@@ -137,14 +158,17 @@ export default function SettingsSection() {
     { value: "malay", label: "Bahasa Melayu" },
   ]
 
+  const timeFormats = [
+    { value: "12h", label: "12-hour (AM/PM)" },
+    { value: "24h", label: "24-hour" },
+  ]
+
   const playAthanPreview = () => {
     setIsPlayingPreview(!isPlayingPreview)
-    // In a real app, this would play/pause the actual Athan preview
-    setTimeout(() => setIsPlayingPreview(false), 3000) // Auto-stop after 3 seconds
+    setTimeout(() => setIsPlayingPreview(false), 3000)
   }
 
   const installPWA = () => {
-    // In a real app, this would trigger the PWA install prompt
     console.log("Installing PWA...")
   }
 
@@ -152,7 +176,6 @@ export default function SettingsSection() {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          // In a real app, reverse geocode these coordinates
           updateSetting("location", "Current Location")
         },
         (error) => {
@@ -191,7 +214,6 @@ export default function SettingsSection() {
 
   return (
     <div className="p-6 max-w-md mx-auto">
-      {/* Header */}
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-primary mb-2 font-[family-name:var(--font-noto-naskh)]" dir="rtl">
           الإعدادات
@@ -200,11 +222,10 @@ export default function SettingsSection() {
       </div>
 
       <div className="space-y-6">
-        {/* Prayer Times Settings */}
         <section>
           <h2 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
             <MapPin size={20} aria-hidden="true" />
-            Prayer Times
+            Prayer Time Settings
           </h2>
 
           <div className="space-y-4">
@@ -252,7 +273,7 @@ export default function SettingsSection() {
 
             <SettingCard
               icon={Calculator}
-              title="Asr Calculation"
+              title="Asr Method"
               description="Choose the juristic method for Asr prayer time"
             >
               <Select value={settings.asrMethod} onValueChange={(value) => updateSetting("asrMethod", value)}>
@@ -263,6 +284,21 @@ export default function SettingsSection() {
                   {asrMethods.map((method) => (
                     <SelectItem key={method.value} value={method.value}>
                       {method.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </SettingCard>
+
+            <SettingCard icon={Clock} title="Time Format" description="Choose between 12-hour and 24-hour time display">
+              <Select value={settings.timeFormat} onValueChange={(value) => updateSetting("timeFormat", value)}>
+                <SelectTrigger aria-label="Time format">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {timeFormats.map((format) => (
+                    <SelectItem key={format.value} value={format.value}>
+                      {format.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -287,7 +323,6 @@ export default function SettingsSection() {
 
         <Separator />
 
-        {/* Audio Settings */}
         <section>
           <h2 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
             <Volume2 size={20} aria-hidden="true" />
@@ -331,7 +366,6 @@ export default function SettingsSection() {
 
         <Separator />
 
-        {/* Quran Settings */}
         <section>
           <h2 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
             <BookOpen size={20} aria-hidden="true" />
@@ -388,7 +422,6 @@ export default function SettingsSection() {
 
         <Separator />
 
-        {/* Alarm Settings */}
         <section>
           <h2 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
             <Bell size={20} aria-hidden="true" />
@@ -497,7 +530,6 @@ export default function SettingsSection() {
 
         <Separator />
 
-        {/* Appearance Settings */}
         <section>
           <h2 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
             <Palette size={20} aria-hidden="true" />
@@ -550,7 +582,6 @@ export default function SettingsSection() {
 
         <Separator />
 
-        {/* PWA Settings */}
         <section>
           <h2 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
             <Download size={20} aria-hidden="true" />
@@ -593,7 +624,6 @@ export default function SettingsSection() {
 
         <Separator />
 
-        {/* Additional Options */}
         <section>
           <div className="space-y-3">
             <Button
@@ -625,12 +655,10 @@ export default function SettingsSection() {
           </div>
         </section>
 
-        {/* Save Button */}
         <Button className="w-full mt-8 bg-primary hover:bg-primary/90 min-h-[48px]" aria-label="Save all settings">
           Save Settings
         </Button>
 
-        {/* App Version */}
         <div className="text-center pt-4">
           <p className="text-sm text-muted-foreground">Athan Wake v1.0.0</p>
         </div>

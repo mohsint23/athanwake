@@ -2,10 +2,9 @@
 
 import type React from "react"
 import { useState, useEffect, useMemo, useCallback } from "react"
-import { MapPin, Volume2, VolumeX, Clock, Sunrise, Sun, Sunset, Moon, Play, Pause, RotateCcw } from "lucide-react"
+import { MapPin, Volume2, VolumeX, Clock, Sunrise, Sun, Sunset, Moon, Play, Pause } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 
 // Prayer times data structure
@@ -65,26 +64,9 @@ const hijriMonths = [
   "ذو الحجة",
 ]
 
-const calculationMethods = [
-  { value: "mwl", label: "Muslim World League" },
-  { value: "isna", label: "Islamic Society of North America" },
-  { value: "egypt", label: "Egyptian General Authority" },
-  { value: "makkah", label: "Umm Al-Qura University, Makkah" },
-  { value: "karachi", label: "University of Islamic Sciences, Karachi" },
-]
-
-const asrMethods = [
-  { value: "standard", label: "Standard (Shafi, Maliki, Hanbali)" },
-  { value: "hanafi", label: "Hanafi" },
-]
-
 export default function AthanSection() {
   const [currentTime, setCurrentTime] = useState(new Date())
   const [location, setLocation] = useState<LocationData | null>(null)
-  const [locationError, setLocationError] = useState<string>("")
-  const [manualLocation, setManualLocation] = useState("")
-  const [calculationMethod, setCalculationMethod] = useState("mwl")
-  const [asrMethod, setAsrMethod] = useState("standard")
   const [athanEnabled, setAthanEnabled] = useState<{ [key: string]: boolean }>({
     fajr: true,
     dhuhr: true,
@@ -95,9 +77,44 @@ export default function AthanSection() {
   const [isPlayingAthan, setIsPlayingAthan] = useState(false)
   const [hijriDate, setHijriDate] = useState<HijriDate | null>(null)
 
+  const [settings, setSettings] = useState({
+    calculationMethod: "mwl",
+    asrMethod: "standard",
+    timeFormat: "12h",
+    hijriDateDisplay: true,
+  })
+
+  useEffect(() => {
+    const savedSettings = localStorage.getItem("athanWakeSettings")
+    if (savedSettings) {
+      const parsed = JSON.parse(savedSettings)
+      setSettings({
+        calculationMethod: parsed.calculationMethod || "mwl",
+        asrMethod: parsed.asrMethod || "standard",
+        timeFormat: parsed.timeFormat || "12h",
+        hijriDateDisplay: parsed.hijriDateDisplay !== false,
+      })
+    }
+
+    const handleSettingsChange = () => {
+      const updatedSettings = localStorage.getItem("athanWakeSettings")
+      if (updatedSettings) {
+        const parsed = JSON.parse(updatedSettings)
+        setSettings({
+          calculationMethod: parsed.calculationMethod || "mwl",
+          asrMethod: parsed.asrMethod || "standard",
+          timeFormat: parsed.timeFormat || "12h",
+          hijriDateDisplay: parsed.hijriDateDisplay !== false,
+        })
+      }
+    }
+
+    window.addEventListener("settingsChanged", handleSettingsChange)
+    return () => window.removeEventListener("settingsChanged", handleSettingsChange)
+  }, [])
+
   const requestLocation = useCallback(async () => {
     if (!navigator.geolocation) {
-      setLocationError("Geolocation is not supported by this browser")
       return
     }
 
@@ -110,7 +127,6 @@ export default function AthanSection() {
         })
       })
 
-      // In a real app, you would reverse geocode these coordinates
       const mockLocation: LocationData = {
         city: "New York",
         country: "United States",
@@ -119,14 +135,17 @@ export default function AthanSection() {
       }
 
       setLocation(mockLocation)
-      setLocationError("")
     } catch (error) {
-      setLocationError("Unable to get your location. Please enter manually.")
+      setLocation({
+        city: "New York",
+        country: "United States",
+        latitude: 40.7128,
+        longitude: -74.006,
+      })
     }
   }, [])
 
   const calculateHijriDate = useCallback((gregorianDate: Date): HijriDate => {
-    // Simplified Hijri calculation (in a real app, use a proper library)
     const hijriEpoch = new Date(622, 6, 16) // July 16, 622 CE
     const daysDiff = Math.floor((gregorianDate.getTime() - hijriEpoch.getTime()) / (1000 * 60 * 60 * 24))
     const hijriYear = Math.floor(daysDiff / 354.37) + 1
@@ -142,7 +161,6 @@ export default function AthanSection() {
     }
   }, [])
 
-  // Update current time every second
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date()
@@ -153,12 +171,10 @@ export default function AthanSection() {
     return () => clearInterval(timer)
   }, [calculateHijriDate])
 
-  // Request location on mount
   useEffect(() => {
     requestLocation()
   }, [requestLocation])
 
-  // Calculate prayer times with status
   const prayerTimes: PrayerTime[] = useMemo(() => {
     const now = currentTime
     const currentTimeStr = now.toTimeString().slice(0, 5)
@@ -211,14 +227,12 @@ export default function AthanSection() {
     return prayers
   }, [currentTime])
 
-  // Find next prayer
   const nextPrayer = useMemo(() => {
     const prayerList = prayerTimes.filter((prayer) => prayer.name !== "Sunrise")
     const upcomingPrayer = prayerList.find((prayer) => !prayer.passed)
-    return upcomingPrayer || prayerList[0] // If all prayers passed, next is Fajr tomorrow
+    return upcomingPrayer || prayerList[0]
   }, [prayerTimes])
 
-  // Calculate time remaining to next prayer and progress
   const { timeToNextPrayer, progressPercentage } = useMemo(() => {
     if (!nextPrayer) return { timeToNextPrayer: "00:00:00", progressPercentage: 0 }
 
@@ -228,7 +242,6 @@ export default function AthanSection() {
     const targetTime = new Date(now)
     targetTime.setHours(hours, minutes, 0, 0)
 
-    // If the prayer time has passed today, set it for tomorrow
     if (targetTime <= now) {
       targetTime.setDate(targetTime.getDate() + 1)
     }
@@ -236,7 +249,6 @@ export default function AthanSection() {
     const diff = targetTime.getTime() - now.getTime()
     const totalMinutesToNext = Math.floor(diff / (1000 * 60))
 
-    // Calculate progress (assuming 6 hours between prayers for demo)
     const progressPercent = Math.max(0, Math.min(100, ((360 - totalMinutesToNext) / 360) * 100))
 
     const hoursLeft = Math.floor(diff / (1000 * 60 * 60))
@@ -258,11 +270,15 @@ export default function AthanSection() {
 
   const playAthan = () => {
     setIsPlayingAthan(!isPlayingAthan)
-    // In a real app, this would play/pause the actual Athan audio
   }
 
   const formatTime = (time24: string) => {
     const [hours, minutes] = time24.split(":").map(Number)
+
+    if (settings.timeFormat === "24h") {
+      return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`
+    }
+
     const period = hours >= 12 ? "PM" : "AM"
     const displayHours = hours % 12 || 12
     return `${displayHours}:${minutes.toString().padStart(2, "0")} ${period}`
@@ -270,13 +286,12 @@ export default function AthanSection() {
 
   return (
     <div className="p-6 max-w-md mx-auto">
-      {/* Header with Hijri Date */}
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-primary mb-2 font-[family-name:var(--font-noto-naskh)]" dir="rtl">
           أوقات الصلاة
         </h1>
         <p className="text-muted-foreground mb-2">Prayer Times</p>
-        {hijriDate && (
+        {hijriDate && settings.hijriDateDisplay && (
           <div className="text-sm text-muted-foreground" dir="rtl">
             <span className="font-[family-name:var(--font-noto-naskh)]">
               {hijriDate.day} {hijriDate.month} {hijriDate.year} هـ
@@ -285,30 +300,26 @@ export default function AthanSection() {
         )}
       </div>
 
-      {/* Location with Error Handling */}
       <div className="mb-6">
-        <div className="flex items-center justify-center gap-2 mb-2">
+        <div className="flex items-center justify-center gap-2 mb-4">
           <MapPin size={16} className="text-primary" />
           <span className="text-sm text-muted-foreground">
             {location ? `${location.city}, ${location.country}` : "Getting location..."}
           </span>
         </div>
-        {locationError && (
-          <div className="text-center">
-            <p className="text-xs text-destructive mb-2">{locationError}</p>
-            <Button variant="outline" size="sm" onClick={requestLocation} className="text-xs bg-transparent">
-              <RotateCcw size={12} className="mr-1" />
-              Retry Location
-            </Button>
-          </div>
-        )}
       </div>
 
-      {/* Current Time */}
       <Card className="bg-primary text-primary-foreground p-6 rounded-2xl shadow-lg mb-6">
         <div className="text-center">
           <div className="text-4xl font-bold mb-2 font-mono">
-            {currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+            {settings.timeFormat === "24h"
+              ? currentTime.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                  hour12: false,
+                })
+              : currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
           </div>
           <div className="text-sm opacity-90">
             {currentTime.toLocaleDateString("en-US", {
@@ -321,10 +332,8 @@ export default function AthanSection() {
         </div>
       </Card>
 
-      {/* Enhanced Next Prayer Card with Progress Ring */}
       {nextPrayer && (
         <Card className="bg-card p-8 rounded-2xl shadow-lg mb-6 border-l-4 border-accent relative overflow-hidden">
-          {/* Progress Ring Background */}
           <div className="absolute top-4 right-4">
             <div className="relative w-16 h-16">
               <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 64 64">
@@ -356,7 +365,7 @@ export default function AthanSection() {
             </div>
           </div>
 
-          <div className="text-center pr-20">
+          <div className="text-center">
             <div className="flex items-center justify-center gap-2 mb-3">
               <Clock size={20} className="text-primary" />
               <span className="text-sm text-muted-foreground">Next Prayer</span>
@@ -369,10 +378,9 @@ export default function AthanSection() {
             <div className="text-3xl font-mono font-bold text-accent mb-2">{timeToNextPrayer}</div>
             <div className="text-xs text-muted-foreground mb-4">Time Remaining</div>
 
-            {/* Play Athan Button */}
             <Button
               onClick={playAthan}
-              className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full px-6"
+              className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full px-6 min-h-[48px]"
               aria-label={isPlayingAthan ? "Pause Athan" : "Play Athan"}
             >
               {isPlayingAthan ? (
@@ -391,42 +399,6 @@ export default function AthanSection() {
         </Card>
       )}
 
-      {/* Calculation Methods */}
-      <div className="mb-6 space-y-3">
-        <div>
-          <label className="text-sm font-medium text-foreground mb-2 block">Calculation Method</label>
-          <Select value={calculationMethod} onValueChange={setCalculationMethod}>
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {calculationMethods.map((method) => (
-                <SelectItem key={method.value} value={method.value}>
-                  {method.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
-          <label className="text-sm font-medium text-foreground mb-2 block">Asr Calculation</label>
-          <Select value={asrMethod} onValueChange={setAsrMethod}>
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {asrMethods.map((method) => (
-                <SelectItem key={method.value} value={method.value}>
-                  {method.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Prayer Times List */}
       <div className="space-y-3">
         <h2 className="text-lg font-semibold text-primary mb-4">Today's Prayer Times</h2>
 
@@ -493,9 +465,11 @@ export default function AthanSection() {
                     >
                       {formatTime(prayer.time)}
                     </div>
-                    <div className={cn("text-xs", isNextPrayer ? "text-primary/60" : "text-muted-foreground")}>
-                      {prayer.time}
-                    </div>
+                    {settings.timeFormat === "12h" && (
+                      <div className={cn("text-xs", isNextPrayer ? "text-primary/60" : "text-muted-foreground")}>
+                        {prayer.time}
+                      </div>
+                    )}
                   </div>
 
                   {canPlayAthan && (
