@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   MapPin,
   Volume2,
@@ -16,6 +15,11 @@ import {
   Palette,
   Globe,
   ChevronRight,
+  Smartphone,
+  Download,
+  Shield,
+  RotateCcw,
+  Play,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -24,45 +28,77 @@ import { Switch } from "@/components/ui/switch"
 import { Slider } from "@/components/ui/slider"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
+import { cn } from "@/lib/utils"
 
 interface Settings {
   location: string
   calculationMethod: string
+  asrMethod: string
   athanVoice: string
   quranFont: string
   quranFontSize: number
   verseRecitationVerification: boolean
+  verseDifficulty: string
+  snoozeEnabled: boolean
+  snoozeDuration: number
   darkMode: boolean
   notifications: boolean
   vibration: boolean
   language: string
+  hijriDateDisplay: boolean
+  pwaInstalled: boolean
 }
 
 export default function SettingsSection() {
   const [settings, setSettings] = useState<Settings>({
     location: "New York, NY",
-    calculationMethod: "isna",
+    calculationMethod: "mwl",
+    asrMethod: "standard",
     athanVoice: "mishary",
-    quranFont: "uthmanic",
+    quranFont: "noto-naskh",
     quranFontSize: 18,
     verseRecitationVerification: true,
+    verseDifficulty: "easy",
+    snoozeEnabled: true,
+    snoozeDuration: 5,
     darkMode: false,
     notifications: true,
     vibration: true,
     language: "english",
+    hijriDateDisplay: true,
+    pwaInstalled: false,
   })
+
+  const [isPlayingPreview, setIsPlayingPreview] = useState(false)
+
+  // Check if PWA is installed
+  useEffect(() => {
+    const checkPWAInstalled = () => {
+      const isStandalone = window.matchMedia("(display-mode: standalone)").matches
+      const isInWebAppiOS = (window.navigator as any).standalone === true
+      setSettings((prev) => ({ ...prev, pwaInstalled: isStandalone || isInWebAppiOS }))
+    }
+
+    checkPWAInstalled()
+  }, [])
 
   const updateSetting = <K extends keyof Settings>(key: K, value: Settings[K]) => {
     setSettings((prev) => ({ ...prev, [key]: value }))
   }
 
   const calculationMethods = [
-    { value: "isna", label: "ISNA (Islamic Society of North America)" },
-    { value: "mwl", label: "MWL (Muslim World League)" },
-    { value: "egypt", label: "Egyptian General Authority of Survey" },
+    { value: "mwl", label: "Muslim World League" },
+    { value: "isna", label: "Islamic Society of North America" },
+    { value: "egypt", label: "Egyptian General Authority" },
     { value: "makkah", label: "Umm Al-Qura University, Makkah" },
     { value: "karachi", label: "University of Islamic Sciences, Karachi" },
-    { value: "tehran", label: "Institute of Geophysics, University of Tehran" },
+    { value: "tehran", label: "Institute of Geophysics, Tehran" },
+    { value: "jafari", label: "Shia Ithna-Ashari (Jafari)" },
+  ]
+
+  const asrMethods = [
+    { value: "standard", label: "Standard (Shafi, Maliki, Hanbali)" },
+    { value: "hanafi", label: "Hanafi" },
   ]
 
   const athanVoices = [
@@ -72,13 +108,22 @@ export default function SettingsSection() {
     { value: "ghamdi", label: "Saad Al-Ghamdi" },
     { value: "ajmi", label: "Ahmad Al-Ajmi" },
     { value: "husary", label: "Mahmoud Khalil Al-Husary" },
+    { value: "minshawi", label: "Mohamed Siddiq Al-Minshawi" },
+    { value: "tablawi", label: "Mohamed Al-Tablawi" },
   ]
 
   const quranFonts = [
+    { value: "noto-naskh", label: "Noto Naskh Arabic" },
     { value: "uthmanic", label: "Uthmanic Hafs" },
     { value: "indopak", label: "Indo-Pak" },
     { value: "qalam", label: "Qalam Majeed" },
     { value: "noorehuda", label: "Noorehuda" },
+  ]
+
+  const verseDifficulties = [
+    { value: "easy", label: "Easy (Short verses)" },
+    { value: "medium", label: "Medium (Medium verses)" },
+    { value: "hard", label: "Hard (Long verses)" },
   ]
 
   const languages = [
@@ -88,27 +133,56 @@ export default function SettingsSection() {
     { value: "turkish", label: "Türkçe" },
     { value: "french", label: "Français" },
     { value: "spanish", label: "Español" },
+    { value: "indonesian", label: "Bahasa Indonesia" },
+    { value: "malay", label: "Bahasa Melayu" },
   ]
+
+  const playAthanPreview = () => {
+    setIsPlayingPreview(!isPlayingPreview)
+    // In a real app, this would play/pause the actual Athan preview
+    setTimeout(() => setIsPlayingPreview(false), 3000) // Auto-stop after 3 seconds
+  }
+
+  const installPWA = () => {
+    // In a real app, this would trigger the PWA install prompt
+    console.log("Installing PWA...")
+  }
+
+  const requestLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          // In a real app, reverse geocode these coordinates
+          updateSetting("location", "Current Location")
+        },
+        (error) => {
+          console.error("Location error:", error)
+        },
+      )
+    }
+  }
 
   const SettingCard = ({
     icon: Icon,
     title,
     description,
     children,
+    className,
   }: {
     icon: React.ComponentType<{ size?: number; className?: string }>
     title: string
     description?: string
     children: React.ReactNode
+    className?: string
   }) => (
-    <Card className="bg-white dark:bg-[#2A2A2A] p-4 rounded-xl shadow-sm">
+    <Card className={cn("bg-card p-4 rounded-xl shadow-sm", className)}>
       <div className="flex items-start gap-4">
-        <div className="p-2 bg-[#0F4C3A]/10 dark:bg-[#F2C94C]/10 rounded-lg">
-          <Icon size={20} className="text-[#0F4C3A] dark:text-[#F2C94C]" />
+        <div className="p-2 bg-primary/10 rounded-lg flex-shrink-0">
+          <Icon size={20} className="text-primary" aria-hidden="true" />
         </div>
-        <div className="flex-1">
-          <h3 className="font-semibold text-[#0F4C3A] dark:text-white mb-1">{title}</h3>
-          {description && <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">{description}</p>}
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-foreground mb-1">{title}</h3>
+          {description && <p className="text-sm text-muted-foreground mb-3">{description}</p>}
           {children}
         </div>
       </div>
@@ -116,20 +190,20 @@ export default function SettingsSection() {
   )
 
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-md mx-auto">
       {/* Header */}
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-[#0F4C3A] dark:text-[#F2C94C] mb-2 font-[family-name:var(--font-amiri)]">
+        <h1 className="text-3xl font-bold text-primary mb-2 font-[family-name:var(--font-noto-naskh)]" dir="rtl">
           الإعدادات
         </h1>
-        <p className="text-gray-600 dark:text-gray-300">Settings</p>
+        <p className="text-muted-foreground">Settings</p>
       </div>
 
       <div className="space-y-6">
         {/* Prayer Times Settings */}
-        <div>
-          <h2 className="text-lg font-semibold text-[#0F4C3A] dark:text-[#F2C94C] mb-4 flex items-center gap-2">
-            <MapPin size={20} />
+        <section>
+          <h2 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+            <MapPin size={20} aria-hidden="true" />
             Prayer Times
           </h2>
 
@@ -140,11 +214,14 @@ export default function SettingsSection() {
                   value={settings.location}
                   onChange={(e) => updateSetting("location", e.target.value)}
                   placeholder="Enter your city"
-                  className="flex-1 bg-white dark:bg-[#1C1C1C]"
+                  className="flex-1"
+                  aria-label="Location input"
                 />
                 <Button
                   variant="outline"
-                  className="border-[#0F4C3A] text-[#0F4C3A] dark:border-[#F2C94C] dark:text-[#F2C94C] bg-transparent"
+                  onClick={requestLocation}
+                  className="min-w-[48px] min-h-[48px] bg-transparent"
+                  aria-label="Get current location"
                 >
                   <MapPin size={16} />
                 </Button>
@@ -160,7 +237,7 @@ export default function SettingsSection() {
                 value={settings.calculationMethod}
                 onValueChange={(value) => updateSetting("calculationMethod", value)}
               >
-                <SelectTrigger className="bg-white dark:bg-[#1C1C1C]">
+                <SelectTrigger aria-label="Calculation method">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -172,15 +249,48 @@ export default function SettingsSection() {
                 </SelectContent>
               </Select>
             </SettingCard>
-          </div>
-        </div>
 
-        <Separator className="bg-[#0F4C3A]/20 dark:bg-[#F2C94C]/20" />
+            <SettingCard
+              icon={Calculator}
+              title="Asr Calculation"
+              description="Choose the juristic method for Asr prayer time"
+            >
+              <Select value={settings.asrMethod} onValueChange={(value) => updateSetting("asrMethod", value)}>
+                <SelectTrigger aria-label="Asr calculation method">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {asrMethods.map((method) => (
+                    <SelectItem key={method.value} value={method.value}>
+                      {method.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </SettingCard>
+
+            <SettingCard
+              icon={BookOpen}
+              title="Hijri Date Display"
+              description="Show Islamic calendar date alongside Gregorian date"
+            >
+              <div className="flex items-center justify-between">
+                <Switch
+                  checked={settings.hijriDateDisplay}
+                  onCheckedChange={(checked) => updateSetting("hijriDateDisplay", checked)}
+                  aria-label="Toggle Hijri date display"
+                />
+              </div>
+            </SettingCard>
+          </div>
+        </section>
+
+        <Separator />
 
         {/* Audio Settings */}
-        <div>
-          <h2 className="text-lg font-semibold text-[#0F4C3A] dark:text-[#F2C94C] mb-4 flex items-center gap-2">
-            <Volume2 size={20} />
+        <section>
+          <h2 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+            <Volume2 size={20} aria-hidden="true" />
             Audio
           </h2>
 
@@ -190,42 +300,48 @@ export default function SettingsSection() {
               title="Athan Voice"
               description="Select your preferred muezzin for the call to prayer"
             >
-              <Select value={settings.athanVoice} onValueChange={(value) => updateSetting("athanVoice", value)}>
-                <SelectTrigger className="bg-white dark:bg-[#1C1C1C]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {athanVoices.map((voice) => (
-                    <SelectItem key={voice.value} value={voice.value}>
-                      {voice.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-2 border-[#0F4C3A] text-[#0F4C3A] dark:border-[#F2C94C] dark:text-[#F2C94C] bg-transparent"
-              >
-                Preview
-              </Button>
+              <div className="space-y-3">
+                <Select value={settings.athanVoice} onValueChange={(value) => updateSetting("athanVoice", value)}>
+                  <SelectTrigger aria-label="Athan voice selection">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {athanVoices.map((voice) => (
+                      <SelectItem key={voice.value} value={voice.value}>
+                        {voice.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={playAthanPreview}
+                  className="bg-transparent"
+                  disabled={isPlayingPreview}
+                  aria-label={isPlayingPreview ? "Playing preview" : "Play Athan preview"}
+                >
+                  <Play size={14} className="mr-2" />
+                  {isPlayingPreview ? "Playing..." : "Preview"}
+                </Button>
+              </div>
             </SettingCard>
           </div>
-        </div>
+        </section>
 
-        <Separator className="bg-[#0F4C3A]/20 dark:bg-[#F2C94C]/20" />
+        <Separator />
 
         {/* Quran Settings */}
-        <div>
-          <h2 className="text-lg font-semibold text-[#0F4C3A] dark:text-[#F2C94C] mb-4 flex items-center gap-2">
-            <BookOpen size={20} />
+        <section>
+          <h2 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+            <BookOpen size={20} aria-hidden="true" />
             Quran
           </h2>
 
           <div className="space-y-4">
             <SettingCard icon={Type} title="Font Style" description="Choose your preferred Arabic font for Quran text">
               <Select value={settings.quranFont} onValueChange={(value) => updateSetting("quranFont", value)}>
-                <SelectTrigger className="bg-white dark:bg-[#1C1C1C]">
+                <SelectTrigger aria-label="Quran font selection">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -248,34 +364,34 @@ export default function SettingsSection() {
                   value={[settings.quranFontSize]}
                   onValueChange={(value) => updateSetting("quranFontSize", value[0])}
                   min={14}
-                  max={28}
+                  max={32}
                   step={2}
                   className="w-full"
+                  aria-label="Quran font size"
                 />
-                <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
+                <div className="flex justify-between text-sm text-muted-foreground">
                   <span>Small (14px)</span>
-                  <span className="font-medium text-[#0F4C3A] dark:text-[#F2C94C]">
-                    Current: {settings.quranFontSize}px
-                  </span>
-                  <span>Large (28px)</span>
+                  <span className="font-medium text-primary">Current: {settings.quranFontSize}px</span>
+                  <span>Large (32px)</span>
                 </div>
                 <div
-                  className="p-3 bg-[#0F4C3A]/5 dark:bg-[#F2C94C]/5 rounded-lg text-center font-[family-name:var(--font-amiri)]"
+                  className="p-3 bg-primary/5 rounded-lg text-center font-[family-name:var(--font-noto-naskh)]"
                   style={{ fontSize: `${settings.quranFontSize}px` }}
+                  dir="rtl"
                 >
                   بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
                 </div>
               </div>
             </SettingCard>
           </div>
-        </div>
+        </section>
 
-        <Separator className="bg-[#0F4C3A]/20 dark:bg-[#F2C94C]/20" />
+        <Separator />
 
         {/* Alarm Settings */}
-        <div>
-          <h2 className="text-lg font-semibold text-[#0F4C3A] dark:text-[#F2C94C] mb-4 flex items-center gap-2">
-            <Bell size={20} />
+        <section>
+          <h2 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+            <Bell size={20} aria-hidden="true" />
             Alarms
           </h2>
 
@@ -285,16 +401,67 @@ export default function SettingsSection() {
               title="Verse Recitation Verification"
               description="Require reciting Quranic verses to dismiss alarms"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    When enabled, you'll need to recite a verse correctly to stop the alarm
-                  </p>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Switch
+                    checked={settings.verseRecitationVerification}
+                    onCheckedChange={(checked) => updateSetting("verseRecitationVerification", checked)}
+                    aria-label="Toggle verse recitation verification"
+                  />
                 </div>
-                <Switch
-                  checked={settings.verseRecitationVerification}
-                  onCheckedChange={(checked) => updateSetting("verseRecitationVerification", checked)}
-                />
+                {settings.verseRecitationVerification && (
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-2 block">Verse Difficulty</label>
+                    <Select
+                      value={settings.verseDifficulty}
+                      onValueChange={(value) => updateSetting("verseDifficulty", value)}
+                    >
+                      <SelectTrigger aria-label="Verse difficulty selection">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {verseDifficulties.map((difficulty) => (
+                          <SelectItem key={difficulty.value} value={difficulty.value}>
+                            {difficulty.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+            </SettingCard>
+
+            <SettingCard
+              icon={RotateCcw}
+              title="Snooze Options"
+              description="Configure snooze functionality for alarms"
+            >
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Enable Snooze</span>
+                  <Switch
+                    checked={settings.snoozeEnabled}
+                    onCheckedChange={(checked) => updateSetting("snoozeEnabled", checked)}
+                    aria-label="Toggle snooze functionality"
+                  />
+                </div>
+                {settings.snoozeEnabled && (
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-2 block">
+                      Snooze Duration: {settings.snoozeDuration} minutes
+                    </label>
+                    <Slider
+                      value={[settings.snoozeDuration]}
+                      onValueChange={(value) => updateSetting("snoozeDuration", value[0])}
+                      min={1}
+                      max={15}
+                      step={1}
+                      className="w-full"
+                      aria-label="Snooze duration in minutes"
+                    />
+                  </div>
+                )}
               </div>
             </SettingCard>
 
@@ -307,27 +474,33 @@ export default function SettingsSection() {
                 <Switch
                   checked={settings.notifications}
                   onCheckedChange={(checked) => updateSetting("notifications", checked)}
+                  aria-label="Toggle notifications"
                 />
               </div>
             </SettingCard>
 
-            <SettingCard icon={Bell} title="Vibration" description="Enable vibration for alarms and notifications">
+            <SettingCard
+              icon={Smartphone}
+              title="Vibration"
+              description="Enable vibration for alarms and notifications"
+            >
               <div className="flex items-center justify-between">
                 <Switch
                   checked={settings.vibration}
                   onCheckedChange={(checked) => updateSetting("vibration", checked)}
+                  aria-label="Toggle vibration"
                 />
               </div>
             </SettingCard>
           </div>
-        </div>
+        </section>
 
-        <Separator className="bg-[#0F4C3A]/20 dark:bg-[#F2C94C]/20" />
+        <Separator />
 
         {/* Appearance Settings */}
-        <div>
-          <h2 className="text-lg font-semibold text-[#0F4C3A] dark:text-[#F2C94C] mb-4 flex items-center gap-2">
-            <Palette size={20} />
+        <section>
+          <h2 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+            <Palette size={20} aria-hidden="true" />
             Appearance
           </h2>
 
@@ -339,13 +512,17 @@ export default function SettingsSection() {
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Sun size={16} className="text-yellow-500" />
+                  <Sun size={16} className="text-yellow-500" aria-hidden="true" />
                   <span className="text-sm">Light</span>
                 </div>
-                <Switch checked={settings.darkMode} onCheckedChange={(checked) => updateSetting("darkMode", checked)} />
+                <Switch
+                  checked={settings.darkMode}
+                  onCheckedChange={(checked) => updateSetting("darkMode", checked)}
+                  aria-label="Toggle dark mode"
+                />
                 <div className="flex items-center gap-2">
                   <span className="text-sm">Dark</span>
-                  <Moon size={16} className="text-blue-500" />
+                  <Moon size={16} className="text-blue-500" aria-hidden="true" />
                 </div>
               </div>
             </SettingCard>
@@ -356,7 +533,7 @@ export default function SettingsSection() {
               description="Choose your preferred language for the app interface"
             >
               <Select value={settings.language} onValueChange={(value) => updateSetting("language", value)}>
-                <SelectTrigger className="bg-white dark:bg-[#1C1C1C]">
+                <SelectTrigger aria-label="Language selection">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -369,45 +546,93 @@ export default function SettingsSection() {
               </Select>
             </SettingCard>
           </div>
-        </div>
+        </section>
 
-        <Separator className="bg-[#0F4C3A]/20 dark:bg-[#F2C94C]/20" />
+        <Separator />
+
+        {/* PWA Settings */}
+        <section>
+          <h2 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+            <Download size={20} aria-hidden="true" />
+            App Installation
+          </h2>
+
+          <div className="space-y-4">
+            {!settings.pwaInstalled && (
+              <SettingCard
+                icon={Download}
+                title="Install App"
+                description="Install Athan Wake as a native app for better performance and offline access"
+              >
+                <Button
+                  onClick={installPWA}
+                  className="w-full bg-primary hover:bg-primary/90"
+                  aria-label="Install Athan Wake as PWA"
+                >
+                  <Download size={16} className="mr-2" />
+                  Install Athan Wake
+                </Button>
+              </SettingCard>
+            )}
+
+            {settings.pwaInstalled && (
+              <SettingCard
+                icon={Shield}
+                title="App Installed"
+                description="Athan Wake is installed and ready for offline use"
+                className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950"
+              >
+                <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
+                  <Shield size={16} />
+                  <span className="text-sm font-medium">Successfully installed</span>
+                </div>
+              </SettingCard>
+            )}
+          </div>
+        </section>
+
+        <Separator />
 
         {/* Additional Options */}
-        <div className="space-y-3">
-          <Button
-            variant="outline"
-            className="w-full justify-between border-[#0F4C3A] text-[#0F4C3A] dark:border-[#F2C94C] dark:text-[#F2C94C] bg-transparent"
-          >
-            <span>About Athan Wake</span>
-            <ChevronRight size={16} />
-          </Button>
+        <section>
+          <div className="space-y-3">
+            <Button
+              variant="outline"
+              className="w-full justify-between bg-transparent min-h-[48px]"
+              aria-label="About Athan Wake"
+            >
+              <span>About Athan Wake</span>
+              <ChevronRight size={16} />
+            </Button>
 
-          <Button
-            variant="outline"
-            className="w-full justify-between border-[#0F4C3A] text-[#0F4C3A] dark:border-[#F2C94C] dark:text-[#F2C94C] bg-transparent"
-          >
-            <span>Privacy Policy</span>
-            <ChevronRight size={16} />
-          </Button>
+            <Button
+              variant="outline"
+              className="w-full justify-between bg-transparent min-h-[48px]"
+              aria-label="Privacy Policy"
+            >
+              <span>Privacy Policy</span>
+              <ChevronRight size={16} />
+            </Button>
 
-          <Button
-            variant="outline"
-            className="w-full justify-between border-[#0F4C3A] text-[#0F4C3A] dark:border-[#F2C94C] dark:text-[#F2C94C] bg-transparent"
-          >
-            <span>Support & Feedback</span>
-            <ChevronRight size={16} />
-          </Button>
-        </div>
+            <Button
+              variant="outline"
+              className="w-full justify-between bg-transparent min-h-[48px]"
+              aria-label="Support and Feedback"
+            >
+              <span>Support & Feedback</span>
+              <ChevronRight size={16} />
+            </Button>
+          </div>
+        </section>
 
         {/* Save Button */}
-        <Button className="w-full mt-8 bg-[#0F4C3A] hover:bg-[#0F4C3A]/90 dark:bg-[#F2C94C] dark:text-black dark:hover:bg-[#F2C94C]/90">
+        <Button className="w-full mt-8 bg-primary hover:bg-primary/90 min-h-[48px]" aria-label="Save all settings">
           Save Settings
         </Button>
 
         {/* App Version */}
         <div className="text-center pt-4">
-          <p className="text-sm text-gray-500 dark:text-gray-400">Athan Wake v1.0.0</p>
+          <p className="text-sm text-muted-foreground">Athan Wake v1.0.0</p>
         </div>
       </div>
     </div>

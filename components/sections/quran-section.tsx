@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Search, Bookmark, BookmarkCheck, Play, Pause, Volume2 } from "lucide-react"
+import { Search, Bookmark, BookmarkCheck, Play, Pause, Volume2, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
@@ -104,32 +104,32 @@ export default function QuranSection({}: QuranSectionProps) {
     if (!surah) return null
 
     return (
-      <div className="p-6">
-        {/* Header with back button */}
+      <div className="p-6 max-w-md mx-auto">
         <div className="flex items-center gap-4 mb-6">
           <Button
             variant="ghost"
             onClick={() => setSelectedSurah(null)}
-            className="text-[#0F4C3A] dark:text-[#F2C94C] hover:bg-[#0F4C3A]/10 dark:hover:bg-[#F2C94C]/10"
+            className="text-primary hover:bg-primary/10 min-w-[48px] min-h-[48px]"
+            aria-label="Go back to Surah list"
           >
-            ← Back
+            <ArrowLeft size={20} />
           </Button>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-[#0F4C3A] dark:text-[#F2C94C] font-[family-name:var(--font-amiri)]">
+            <h1 className="text-2xl font-bold text-primary font-[family-name:var(--font-noto-naskh)]" dir="rtl">
               {surah.name}
             </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-300">
+            <p className="text-sm text-muted-foreground">
               {surah.transliteration} • {surah.verses} verses • {surah.revelation}
             </p>
           </div>
         </div>
 
-        {/* Translation toggle and audio controls */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 gap-3">
           <Button
             variant="outline"
             onClick={() => setShowTranslation(!showTranslation)}
-            className="border-[#0F4C3A] text-[#0F4C3A] dark:border-[#F2C94C] dark:text-[#F2C94C]"
+            className="bg-transparent flex-1"
+            aria-label={showTranslation ? "Hide English translation" : "Show English translation"}
           >
             {showTranslation ? "Hide Translation" : "Show Translation"}
           </Button>
@@ -137,66 +137,71 @@ export default function QuranSection({}: QuranSectionProps) {
           <Button
             variant="outline"
             onClick={() => toggleAudio(surah.id)}
-            className="border-[#0F4C3A] text-[#0F4C3A] dark:border-[#F2C94C] dark:text-[#F2C94C]"
+            className="bg-transparent min-w-[48px] min-h-[48px]"
+            aria-label={playingAudio === surah.id ? "Pause audio recitation" : "Play audio recitation"}
           >
             {playingAudio === surah.id ? <Pause size={16} /> : <Play size={16} />}
             <Volume2 size={16} className="ml-2" />
           </Button>
         </div>
 
-        {/* Surah content */}
-        <Card className="bg-white dark:bg-[#2A2A2A] p-6 rounded-2xl shadow-lg">
+        <Card className="bg-card p-6 rounded-2xl shadow-lg">
           {/* Bismillah */}
           {surah.id !== 1 && surah.id !== 9 && (
-            <div className="text-center mb-8 p-4 bg-[#0F4C3A]/5 dark:bg-[#F2C94C]/5 rounded-xl">
-              <p className="text-2xl font-[family-name:var(--font-amiri)] text-[#0F4C3A] dark:text-[#F2C94C]">
+            <div className="text-center mb-8 p-4 bg-primary/5 rounded-xl">
+              <p className="text-2xl font-[family-name:var(--font-noto-naskh)] text-primary" dir="rtl">
                 بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
               </p>
               {showTranslation && (
-                <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
+                <p className="text-sm text-muted-foreground mt-2">
                   In the name of Allah, the Most Gracious, the Most Merciful
                 </p>
               )}
             </div>
           )}
 
-          {/* Sample verses (in a real app, this would be the full Surah) */}
+          {/* Sample verses */}
           <div className="space-y-6">
             {surah.id === 1 ? (
               // Al-Fatiha verses
               <>
                 <div className="text-right">
-                  <p className="text-xl font-[family-name:var(--font-amiri)] leading-relaxed text-[#0F4C3A] dark:text-white mb-2">
+                  <p
+                    className="text-xl font-[family-name:var(--font-noto-naskh)] leading-relaxed text-foreground mb-2"
+                    dir="rtl"
+                  >
                     الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ
                   </p>
                   {showTranslation && (
-                    <p className="text-sm text-gray-600 dark:text-gray-300">
-                      All praise is due to Allah, Lord of the worlds
-                    </p>
+                    <p className="text-sm text-muted-foreground">All praise is due to Allah, Lord of the worlds</p>
                   )}
                 </div>
                 <div className="text-right">
-                  <p className="text-xl font-[family-name:var(--font-amiri)] leading-relaxed text-[#0F4C3A] dark:text-white mb-2">
+                  <p
+                    className="text-xl font-[family-name:var(--font-noto-naskh)] leading-relaxed text-foreground mb-2"
+                    dir="rtl"
+                  >
                     الرَّحْمَٰنِ الرَّحِيمِ
                   </p>
                   {showTranslation && (
-                    <p className="text-sm text-gray-600 dark:text-gray-300">The Most Gracious, the Most Merciful</p>
+                    <p className="text-sm text-muted-foreground">The Most Gracious, the Most Merciful</p>
                   )}
                 </div>
                 <div className="text-right">
-                  <p className="text-xl font-[family-name:var(--font-amiri)] leading-relaxed text-[#0F4C3A] dark:text-white mb-2">
+                  <p
+                    className="text-xl font-[family-name:var(--font-noto-naskh)] leading-relaxed text-foreground mb-2"
+                    dir="rtl"
+                  >
                     مَالِكِ يَوْمِ الدِّينِ
                   </p>
-                  {showTranslation && (
-                    <p className="text-sm text-gray-600 dark:text-gray-300">Master of the Day of Judgment</p>
-                  )}
+                  {showTranslation && <p className="text-sm text-muted-foreground">Master of the Day of Judgment</p>}
                 </div>
               </>
             ) : (
               // Sample verses for other Surahs
               <div className="text-center py-8">
-                <p className="text-lg text-gray-500 dark:text-gray-400">Full Surah content would be displayed here</p>
-                <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
+                <p className="text-lg text-muted-foreground">Full Surah content would be displayed here</p>
+                <p className="text-sm text-muted-foreground mt-2">
                   {surah.verses} verses with Arabic text and optional translation
                 </p>
               </div>
@@ -208,32 +213,30 @@ export default function QuranSection({}: QuranSectionProps) {
   }
 
   return (
-    <div className="p-6">
-      {/* Header */}
+    <div className="p-6 max-w-md mx-auto">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-[#0F4C3A] dark:text-[#F2C94C] mb-2 font-[family-name:var(--font-amiri)]">
+        <h1 className="text-3xl font-bold text-primary mb-2 font-[family-name:var(--font-noto-naskh)]" dir="rtl">
           القرآن الكريم
         </h1>
-        <p className="text-gray-600 dark:text-gray-300">Holy Quran</p>
+        <p className="text-muted-foreground">Holy Quran</p>
       </div>
 
-      {/* Search Bar */}
       <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
         <Input
           type="text"
           placeholder="Search Surahs..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 bg-white dark:bg-[#2A2A2A] border-[#0F4C3A]/20 dark:border-[#F2C94C]/20 focus:border-[#0F4C3A] dark:focus:border-[#F2C94C] rounded-xl"
+          className="pl-10 rounded-xl"
+          aria-label="Search for Surahs by name, transliteration, or translation"
         />
       </div>
 
-      {/* Bookmarked Surahs Section */}
       {bookmarkedSurahs.size > 0 && (
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold text-[#0F4C3A] dark:text-[#F2C94C] mb-3 flex items-center gap-2">
-            <BookmarkCheck size={20} />
+        <section className="mb-6">
+          <h2 className="text-lg font-semibold text-primary mb-3 flex items-center gap-2">
+            <BookmarkCheck size={20} aria-hidden="true" />
             Bookmarked
           </h2>
           <div className="grid gap-3">
@@ -242,58 +245,79 @@ export default function QuranSection({}: QuranSectionProps) {
               .map((surah) => (
                 <Card
                   key={`bookmark-${surah.id}`}
-                  className="bg-[#0F4C3A]/5 dark:bg-[#F2C94C]/5 border-[#0F4C3A]/20 dark:border-[#F2C94C]/20 p-4 rounded-xl cursor-pointer hover:bg-[#0F4C3A]/10 dark:hover:bg-[#F2C94C]/10 transition-colors"
+                  className="bg-primary/5 border-primary/20 p-4 rounded-xl cursor-pointer hover:bg-primary/10 transition-colors"
                   onClick={() => openSurah(surah.id)}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Open bookmarked Surah ${surah.transliteration}`}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault()
+                      openSurah(surah.id)
+                    }
+                  }}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3">
-                        <span className="text-sm font-medium text-[#0F4C3A] dark:text-[#F2C94C] bg-[#0F4C3A]/10 dark:bg-[#F2C94C]/10 px-2 py-1 rounded">
+                        <span className="text-sm font-medium text-primary bg-primary/10 px-2 py-1 rounded min-w-[32px] text-center">
                           {surah.id}
                         </span>
                         <div>
-                          <h3 className="font-semibold text-[#0F4C3A] dark:text-white font-[family-name:var(--font-amiri)]">
+                          <h3
+                            className="font-semibold text-foreground font-[family-name:var(--font-noto-naskh)]"
+                            dir="rtl"
+                          >
                             {surah.name}
                           </h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">
+                          <p className="text-sm text-muted-foreground">
                             {surah.transliteration} • {surah.verses} verses
                           </p>
                         </div>
                       </div>
                     </div>
-                    <BookmarkCheck className="text-[#F2C94C] dark:text-[#F2C94C]" size={20} />
+                    <BookmarkCheck className="text-accent" size={20} aria-hidden="true" />
                   </div>
                 </Card>
               ))}
           </div>
-        </div>
+        </section>
       )}
 
-      {/* All Surahs List */}
-      <div>
-        <h2 className="text-lg font-semibold text-[#0F4C3A] dark:text-[#F2C94C] mb-4">
-          All Surahs ({filteredSurahs.length})
-        </h2>
-        <div className="space-y-3">
+      <section>
+        <h2 className="text-lg font-semibold text-primary mb-4">All Surahs ({filteredSurahs.length})</h2>
+        <div className="space-y-3" role="list">
           {filteredSurahs.map((surah) => (
             <Card
               key={surah.id}
-              className="bg-white dark:bg-[#2A2A2A] p-4 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer"
+              className="bg-card p-4 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer"
               onClick={() => openSurah(surah.id)}
+              role="listitem button"
+              tabIndex={0}
+              aria-label={`Open Surah ${surah.transliteration} - ${surah.translation}`}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault()
+                  openSurah(surah.id)
+                }
+              }}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 flex-1">
-                  <span className="text-sm font-medium text-[#0F4C3A] dark:text-[#F2C94C] bg-[#0F4C3A]/10 dark:bg-[#F2C94C]/10 px-2 py-1 rounded min-w-[32px] text-center">
+                  <span className="text-sm font-medium text-primary bg-primary/10 px-2 py-1 rounded min-w-[32px] text-center">
                     {surah.id}
                   </span>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-[#0F4C3A] dark:text-white font-[family-name:var(--font-amiri)] text-lg">
+                    <h3
+                      className="font-semibold text-foreground font-[family-name:var(--font-noto-naskh)] text-lg"
+                      dir="rtl"
+                    >
                       {surah.name}
                     </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                    <p className="text-sm text-muted-foreground">
                       {surah.transliteration} • {surah.translation}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-muted-foreground">
                       {surah.verses} verses • {surah.revelation}
                     </p>
                   </div>
@@ -307,7 +331,8 @@ export default function QuranSection({}: QuranSectionProps) {
                       e.stopPropagation()
                       toggleAudio(surah.id)
                     }}
-                    className="text-[#0F4C3A] dark:text-[#F2C94C] hover:bg-[#0F4C3A]/10 dark:hover:bg-[#F2C94C]/10"
+                    className="text-primary hover:bg-primary/10 min-w-[48px] min-h-[48px]"
+                    aria-label={`${playingAudio === surah.id ? "Pause" : "Play"} audio for ${surah.transliteration}`}
                   >
                     {playingAudio === surah.id ? <Pause size={16} /> : <Play size={16} />}
                   </Button>
@@ -319,9 +344,10 @@ export default function QuranSection({}: QuranSectionProps) {
                       toggleBookmark(surah.id)
                     }}
                     className={cn(
-                      "hover:bg-[#F2C94C]/10",
-                      bookmarkedSurahs.has(surah.id) ? "text-[#F2C94C]" : "text-gray-400 dark:text-gray-500",
+                      "hover:bg-accent/10 min-w-[48px] min-h-[48px]",
+                      bookmarkedSurahs.has(surah.id) ? "text-accent" : "text-muted-foreground",
                     )}
+                    aria-label={`${bookmarkedSurahs.has(surah.id) ? "Remove bookmark from" : "Bookmark"} ${surah.transliteration}`}
                   >
                     {bookmarkedSurahs.has(surah.id) ? <BookmarkCheck size={16} /> : <Bookmark size={16} />}
                   </Button>
@@ -330,7 +356,7 @@ export default function QuranSection({}: QuranSectionProps) {
             </Card>
           ))}
         </div>
-      </div>
+      </section>
     </div>
   )
 }
